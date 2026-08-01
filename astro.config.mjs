@@ -7,8 +7,16 @@ import cloudflare from "@astrojs/cloudflare";
 
 // https://astro.build/config
 export default defineConfig({
-	site: "https://example.com",
-	integrations: [mdx(), sitemap()],
+	site: "https://idea-lamp-ilyes.pages.dev",
+	output: "server",
+	integrations: [
+		mdx(),
+		sitemap({
+			// Exclude admin and API routes from sitemap
+			filter: (page) =>
+				!page.includes("/admin") && !page.includes("/api/"),
+		}),
+	],
 	adapter: cloudflare({
 		platformProxy: {
 			enabled: true,

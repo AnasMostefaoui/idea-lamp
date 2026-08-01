@@ -1,50 +1,288 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
-import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ComicCard from '../components/ComicCard.astro';
+import { getCollection } from 'astro:content';
+import { SITE_TITLE, SITE_DESCRIPTION, CREATOR_NAME } from '../consts';
+
+const allComics = (await getCollection('comics')).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+const allChapters = await getCollection('chapters');
+
+function chapterCount(slug: string) {
+	return allChapters.filter(c => c.data.comicSlug === slug).length;
+}
+
+const featured   = allComics.filter(c => c.data.featured).slice(0, 1)[0];
+const curated    = allComics.filter(c => c.data.curatedMoment);
+const latestComics = allComics.slice(0, 6);
+
+const homeJsonLd = {
+	'@context': 'https://schema.org',
+	'@type': 'WebPage',
+	name: SITE_TITLE,
+	description: SITE_DESCRIPTION,
+	url: Astro.site?.toString() ?? '/',
+	author: { '@type': 'Person', name: CREATOR_NAME },
+};
 ---
 
-<!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-	</head>
-	<body>
-		<Header />
-		<main>
-			<h1>🧑‍🚀 Hello, Astronaut!</h1>
-			<p>
-				Welcome to the official <a href="https://astro.build/">Astro</a> blog starter template. This
-				template serves as a lightweight, minimally-styled starting point for anyone looking to build
-				a personal website, blog, or portfolio with Astro.
+<BaseLayout title={SITE_TITLE} description={SITE_DESCRIPTION} jsonLd={homeJsonLd}>
+	<!-- ═══════════ HERO ═══════════ -->
+	<section class="hero">
+		<div class="hero-content">
+			<p class="hero-sub">Welcome to</p>
+			<h1 class="display-title">
+				<span class="lamp">💡</span> Idea Lamp Ilyes
+			</h1>
+			<p class="hero-desc">
+				Hi! I'm <strong>{CREATOR_NAME}</strong>, and I make my own comics! 🎨<br />
+				Dive into my adventures, mysteries, and silly stories — all drawn by me!
 			</p>
+			<div class="hero-actions">
+				<a href="/comics" class="btn btn-primary">Explore Comics 📚</a>
+				<a href="/about" class="btn btn-outline">Meet the Artist 🎨</a>
+			</div>
+		</div>
+		<div class="hero-art" aria-hidden="true">
+			<div class="bulb-glow">💡</div>
+		</div>
+	</section>
+
+	<!-- ═══════════ FEATURED ═══════════ -->
+	{featured && (
+		<section class="section">
+			<div class="section-title">
+				<span class="icon">⭐</span>
+				<h2>Featured Comic</h2>
+			</div>
+			<ComicCard
+				slug={featured.id}
+				title={featured.data.title}
+				description={featured.data.description}
+				coverImage={featured.data.coverImage}
+				genre={featured.data.genre}
+				status={featured.data.status}
+				chapterCount={chapterCount(featured.id)}
+				pubDate={featured.data.pubDate}
+				featured_display={true}
+			/>
+		</section>
+	)}
+
+	<!-- ═══════════ LATEST COMICS ═══════════ -->
+	<section class="section">
+		<div class="section-title">
+			<span class="icon">🆕</span>
+			<h2>Latest Comics</h2>
+			<a href="/comics" class="see-all">See all →</a>
+		</div>
+		<div class="comics-grid">
+			{latestComics.map(comic => (
+				<ComicCard
+					slug={comic.id}
+					title={comic.data.title}
+					description={comic.data.description}
+					coverImage={comic.data.coverImage}
+					genre={comic.data.genre}
+					status={comic.data.status}
+					chapterCount={chapterCount(comic.id)}
+					pubDate={comic.data.pubDate}
+				/>
+			))}
+		</div>
+	</section>
+
+	<!-- ═══════════ CURATED MOMENTS ═══════════ -->
+	{curated.length > 0 && (
+		<section class="section curated-section">
+			<div class="section-title">
+				<span class="icon">✨</span>
+				<h2>Curated Moments</h2>
+			</div>
+			<p class="section-desc">Special picks from Ilyes — his favourite panels and stories!</p>
+			<div class="curated-grid">
+				{curated.map(comic => (
+					<a href={`/comics/${comic.id}`} class="curated-item">
+						<img
+							src={comic.data.coverImage}
+							alt={`${comic.data.title} — curated pick`}
+							loading="lazy"
+							decoding="async"
+							width={400}
+							height={300}
+						/>
+						<div class="curated-label">
+							<span>{comic.data.title}</span>
+						</div>
+					</a>
+				))}
+			</div>
+		</section>
+	)}
+
+	<!-- ═══════════ ABOUT TEASER ═══════════ -->
+	<section class="about-teaser">
+		<div class="about-text">
+			<h2 class="display-title">Meet {CREATOR_NAME} 🎨</h2>
 			<p>
-				This template comes with a few integrations already configured in your
-				<code>astro.config.mjs</code> file. You can customize your setup with
-				<a href="https://astro.build/integrations">Astro Integrations</a> to add tools like Tailwind,
-				React, or Vue to your project.
+				{CREATOR_NAME} is an 8-year-old comic artist with a huge imagination and a bright idea every day.
+				He creates all his comics by hand — every character, every story, every adventure comes straight from his mind!
 			</p>
-			<p>Here are a few ideas on how to get started with the template:</p>
-			<ul>
-				<li>Edit this page in <code>src/pages/index.astro</code></li>
-				<li>Edit the site header items in <code>src/components/Header.astro</code></li>
-				<li>Add your name to the footer in <code>src/components/Footer.astro</code></li>
-				<li>Check out the included blog posts in <code>src/content/blog/</code></li>
-				<li>Customize the blog post page layout in <code>src/layouts/BlogPost.astro</code></li>
-			</ul>
-			<p>
-				Have fun! If you get stuck, remember to <a href="https://docs.astro.build/"
-					>read the docs
-				</a> or <a href="https://astro.build/chat">join us on Discord</a> to ask questions.
-			</p>
-			<p>
-				Looking for a blog template with a bit more personality? Check out <a
-					href="https://github.com/Charca/astro-blog-template"
-					>astro-blog-template
-				</a> by <a href="https://twitter.com/Charca">Maxi Ferreira</a>.
-			</p>
-		</main>
-		<Footer />
-	</body>
-</html>
+			<a href="/about" class="btn btn-secondary">Learn More About Ilyes</a>
+		</div>
+		<div class="about-icon" aria-hidden="true">🧒‍♂️🎨📚</div>
+	</section>
+
+	<!-- ═══════════ FAN MAIL CTA ═══════════ -->
+	<section class="fan-cta">
+		<h2>Love Ilyes's Comics? 💌</h2>
+		<p>Send him a message — he loves hearing from fans!</p>
+		<a href="/fan-mail" class="btn btn-primary">Send Fan Mail</a>
+	</section>
+</BaseLayout>
+
+<style>
+/* ── Hero ─────────────────────────────────── */
+.hero {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 2rem;
+	padding: 3rem 0 2.5rem;
+	flex-wrap: wrap;
+}
+.hero-content { flex: 1; min-width: 280px; }
+.hero-sub {
+	font-size: 1rem;
+	font-weight: 700;
+	color: var(--text-muted);
+	text-transform: uppercase;
+	letter-spacing: .1em;
+	margin: 0 0 .4rem;
+}
+.hero h1 {
+	font-size: clamp(2.4rem, 6vw, 4rem);
+	margin: 0 0 1rem;
+	color: var(--secondary);
+}
+.lamp { display: inline-block; animation: pulse 2.5s ease-in-out infinite; }
+@keyframes pulse {
+	0%,100% { transform: scale(1); }
+	50% { transform: scale(1.12); }
+}
+.hero-desc {
+	font-size: 1.15rem;
+	margin-bottom: 1.75rem;
+	color: var(--text-muted);
+}
+.hero-actions { display: flex; gap: .85rem; flex-wrap: wrap; }
+
+.hero-art {
+	flex-shrink: 0;
+	text-align: center;
+}
+.bulb-glow {
+	font-size: clamp(4rem, 12vw, 8rem);
+	filter: drop-shadow(0 0 32px rgba(245,158,11,.5));
+	animation: float 3s ease-in-out infinite;
+}
+@keyframes float {
+	0%,100% { transform: translateY(0); }
+	50% { transform: translateY(-12px); }
+}
+
+/* ── Sections ────────────────────────────── */
+.section { margin-bottom: 3.5rem; }
+
+.section-title {
+	display: flex;
+	align-items: center;
+	gap: .75rem;
+	margin-bottom: 1.5rem;
+	flex-wrap: wrap;
+}
+.section-title h2 { margin: 0; }
+.section-title .icon { font-size: 1.8rem; }
+.see-all {
+	margin-left: auto;
+	font-weight: 700;
+	color: var(--secondary);
+	font-size: .9rem;
+}
+
+.section-desc { color: var(--text-muted); margin: -.75rem 0 1.25rem; }
+
+/* ── Comics grid ─────────────────────────── */
+.comics-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 1.5rem;
+}
+
+/* ── Curated ─────────────────────────────── */
+.curated-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 1rem;
+}
+.curated-item {
+	position: relative;
+	border-radius: var(--radius-lg);
+	overflow: hidden;
+	display: block;
+	border: 2px solid var(--border);
+	box-shadow: var(--shadow);
+	transition: transform .2s;
+}
+.curated-item:hover { transform: translateY(-4px); }
+.curated-item img {
+	width: 100%;
+	aspect-ratio: 4/3;
+	object-fit: cover;
+	border-radius: 0;
+	display: block;
+}
+.curated-label {
+	position: absolute;
+	inset: 0 0 0;
+	top: auto;
+	padding: .75rem 1rem;
+	background: linear-gradient(to top, rgba(0,0,0,.75), transparent);
+	color: #fff;
+	font-weight: 700;
+	font-size: .9rem;
+}
+
+/* ── About teaser ────────────────────────── */
+.about-teaser {
+	display: flex;
+	align-items: center;
+	gap: 2rem;
+	flex-wrap: wrap;
+	padding: 2.5rem;
+	background: var(--surface-alt);
+	border-radius: var(--radius-xl);
+	border: 2px solid var(--border);
+	margin-bottom: 3.5rem;
+}
+.about-text { flex: 1; min-width: 260px; }
+.about-text h2 { margin-bottom: .75rem; color: var(--secondary); }
+.about-text p  { color: var(--text-muted); margin-bottom: 1.25rem; }
+.about-icon { font-size: 5rem; text-align: center; flex-shrink: 0; }
+
+/* ── Fan CTA ─────────────────────────────── */
+.fan-cta {
+	text-align: center;
+	padding: 3rem 2rem;
+	background: var(--primary-light);
+	border-radius: var(--radius-xl);
+	border: 3px solid var(--primary);
+	margin-bottom: 2rem;
+}
+.fan-cta h2 { margin-bottom: .5rem; }
+.fan-cta p  { color: var(--text-muted); margin-bottom: 1.5rem; }
+</style>
+

@@ -1,0 +1,207 @@
+---
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { CREATOR_NAME } from '../consts';
+
+const description = `Send a fan message to ${CREATOR_NAME}! He loves hearing from readers. Share your thoughts on his comics.`;
+
+const contactJsonLd = {
+	'@context': 'https://schema.org',
+	'@type': 'ContactPage',
+	name: `Fan Mail | Idea Lamp Ilyes`,
+	description,
+	url: `${Astro.site}fan-mail`,
+};
+
+const success = Astro.url.searchParams.get('sent') === '1';
+---
+
+<BaseLayout
+	title="Fan Mail 💌"
+	description={description}
+	pageType="ContactPage"
+	jsonLd={contactJsonLd}
+>
+	<Breadcrumbs crumbs={[{ label: 'Home', href: '/' }, { label: 'Fan Mail' }]} />
+
+	<div class="fan-mail-page">
+		<div class="header">
+			<h1 class="display-title">Fan Mail 💌</h1>
+			<p class="lead">
+				Send {CREATOR_NAME} a message! He reads every single one and loves hearing from fans. 🌟
+			</p>
+		</div>
+
+		{success ? (
+			<div class="alert alert-success success-card">
+				<h2>🎉 Message Sent!</h2>
+				<p>Thank you! {CREATOR_NAME} will be thrilled to read your message. You're awesome! ✨</p>
+				<a href="/" class="btn btn-primary">Back to Home</a>
+			</div>
+		) : (
+			<div class="form-card">
+				<form id="fan-form" method="post" action="/api/fan-mail" novalidate>
+					<div class="field">
+						<label for="name">Your Name <span class="required" aria-label="required">*</span></label>
+						<input
+							type="text"
+							id="name"
+							name="name"
+							required
+							minlength="2"
+							maxlength="80"
+							placeholder="What's your name?"
+							autocomplete="name"
+						/>
+					</div>
+
+					<div class="field">
+						<label for="email">Email (optional)</label>
+						<input
+							type="email"
+							id="email"
+							name="email"
+							maxlength="120"
+							placeholder="your@email.com (if you'd like a reply)"
+							autocomplete="email"
+						/>
+						<p class="hint">We'll never share your email with anyone.</p>
+					</div>
+
+					<div class="field">
+						<label for="message">Your Message <span class="required" aria-label="required">*</span></label>
+						<textarea
+							id="message"
+							name="message"
+							required
+							minlength="10"
+							maxlength="1000"
+							placeholder="Tell Ilyes what you think of his comics! Which is your favourite? What would you like to see next?"
+						></textarea>
+					</div>
+
+					<div class="field honeypot" aria-hidden="true">
+						<label for="website">Website</label>
+						<input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+					</div>
+
+					<div id="form-error" class="alert alert-danger" style="display:none" role="alert"></div>
+
+					<button type="submit" class="btn btn-primary submit-btn" id="submit-btn">
+						Send Message 💌
+					</button>
+				</form>
+			</div>
+		)}
+
+		<!-- Encouragement block -->
+		<div class="encouragement">
+			<div class="enc-icon" aria-hidden="true">💡</div>
+			<div class="enc-text">
+				<h3>{CREATOR_NAME} reads every message!</h3>
+				<p>Your kind words motivate him to keep creating. Even a short "I loved your comic!" makes his day. 😊</p>
+			</div>
+		</div>
+	</div>
+</BaseLayout>
+
+<script>
+	const form = document.getElementById('fan-form') as HTMLFormElement | null;
+	const btn  = document.getElementById('submit-btn') as HTMLButtonElement | null;
+	const err  = document.getElementById('form-error') as HTMLElement | null;
+
+	form?.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		if (!btn || !err) return;
+
+		// Client-side validation
+		const name    = (form.elements.namedItem('name')    as HTMLInputElement).value.trim();
+		const message = (form.elements.namedItem('message') as HTMLTextAreaElement).value.trim();
+
+		if (name.length < 2) {
+			showError('Please enter your name (at least 2 characters).');
+			return;
+		}
+		if (message.length < 10) {
+			showError('Please write a message (at least 10 characters).');
+			return;
+		}
+
+		btn.disabled = true;
+		btn.textContent = 'Sending… ✉️';
+
+		try {
+			const res = await fetch('/api/fan-mail', {
+				method: 'POST',
+				body: new FormData(form),
+			});
+			if (res.ok) {
+				window.location.href = '/fan-mail?sent=1';
+			} else {
+				const data = await res.json().catch(() => ({}));
+				showError((data as { error?: string }).error ?? 'Something went wrong. Please try again.');
+			}
+		} catch {
+			showError('Network error. Please check your connection and try again.');
+		} finally {
+			btn.disabled = false;
+			btn.textContent = 'Send Message 💌';
+		}
+	});
+
+	function showError(msg: string) {
+		if (!err) return;
+		err.textContent = msg;
+		err.style.display = 'block';
+		err.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+	}
+</script>
+
+<style>
+.fan-mail-page { max-width: 640px; margin: 0 auto; }
+
+.header { margin-bottom: 2rem; }
+.header h1 { color: var(--secondary); margin-bottom: .5rem; }
+.lead { font-size: 1.1rem; color: var(--text-muted); margin: 0; }
+
+.success-card {
+	border-radius: var(--radius-lg);
+	padding: 2rem;
+	text-align: center;
+}
+.success-card h2 { margin-bottom: .5rem; }
+.success-card .btn { margin-top: 1rem; }
+
+.form-card {
+	background: var(--surface);
+	border: 2px solid var(--border);
+	border-radius: var(--radius-lg);
+	padding: 2rem;
+	margin-bottom: 2rem;
+	box-shadow: var(--shadow);
+}
+
+.field { margin-bottom: 1.25rem; }
+.required { color: var(--accent); }
+.hint { margin: .25rem 0 0; font-size: .82rem; color: var(--text-muted); }
+
+/* honeypot */
+.honeypot { display: none; }
+
+.submit-btn { width: 100%; justify-content: center; margin-top: .5rem; }
+
+.encouragement {
+	display: flex;
+	align-items: center;
+	gap: 1.25rem;
+	padding: 1.5rem;
+	background: var(--primary-light);
+	border: 2px solid var(--primary);
+	border-radius: var(--radius-lg);
+}
+.enc-icon { font-size: 3rem; flex-shrink: 0; }
+.enc-text h3 { margin-bottom: .3rem; }
+.enc-text p  { margin: 0; color: var(--text-muted); font-size: .95rem; }
+</style>
