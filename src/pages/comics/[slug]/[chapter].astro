@@ -1,0 +1,302 @@
+---
+export const prerender = true;
+
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+	const chapters = await getCollection('chapters');
+	const comics   = await getCollection('comics');
+
+	return chapters.map(chapter => {
+		const comicSlug   = chapter.data.comicSlug;
+		const chapterSlug = chapter.id.split('/').pop() ?? '';
+		const comic       = comics.find(c => c.id === comicSlug);
+
+		// Siblings sorted by chapter number
+		const siblings = chapters
+			.filter(c => c.data.comicSlug === comicSlug)
+			.sort((a, b) => a.data.chapterNumber - b.data.chapterNumber);
+
+		const currentIndex = siblings.findIndex(c => c.id === chapter.id);
+		const prev = siblings[currentIndex - 1] ?? null;
+		const next = siblings[currentIndex + 1] ?? null;
+
+		return {
+			params: { slug: comicSlug, chapter: chapterSlug },
+			props: { chapter, comic, prev, next, totalChapters: siblings.length },
+		};
+	});
+}
+
+const { chapter, comic, prev, next, totalChapters } = Astro.props;
+const { title, pages, chapterNumber, pubDate } = chapter.data;
+const comicTitle = comic?.data.title ?? chapter.data.comicSlug;
+const comicSlug  = chapter.data.comicSlug;
+
+function chapterHref(ch: { id: string }) {
+	return `/comics/${comicSlug}/${ch.id.split('/').pop()}`;
+}
+
+const description = `Read "${title}" — Chapter ${chapterNumber} of ${comicTitle}. A hand-drawn comic by Ilyes. ${pages.length} pages.`;
+
+const chapterJsonLd = {
+	'@context': 'https://schema.org',
+	'@type': 'ComicIssue',
+	name: `${comicTitle} — Chapter ${chapterNumber}: ${title}`,
+	description,
+	isPartOf: {
+		'@type': 'ComicSeries',
+		name: comicTitle,
+		url: `${Astro.site}comics/${comicSlug}`,
+	},
+	issueNumber: String(chapterNumber),
+	datePublished: pubDate.toISOString(),
+	author: { '@type': 'Person', name: 'Ilyes' },
+	pageCount: pages.length,
+};
+---
+
+<BaseLayout
+	title={`${comicTitle} — Chapter ${chapterNumber}: ${title}`}
+	description={description}
+	image={pages[0]}
+	pageType="Article"
+	jsonLd={chapterJsonLd}
+	fullWidth={true}
+>
+	<!-- ── Reader shell ── -->
+	<div class="reader">
+
+		<!-- Top navigation bar -->
+		<nav class="reader-nav" aria-label="Chapter navigation">
+			<div class="nav-left">
+				<a href={`/comics/${comicSlug}`} class="btn btn-sm btn-outline back-btn" aria-label="Back to comic">
+					← Back
+				</a>
+			</div>
+
+			<div class="nav-center">
+				<a href={`/comics/${comicSlug}`} class="comic-link">{comicTitle}</a>
+				<span class="sep" aria-hidden="true">›</span>
+				<span class="chapter-label">Chapter {chapterNumber}: {title}</span>
+			</div>
+
+			<div class="nav-right">
+				{prev && (
+					<a href={chapterHref(prev)} class="btn btn-sm btn-outline" aria-label={`Previous chapter: ${prev.data.title}`}>
+						‹ Prev
+					</a>
+				)}
+				<span class="chapter-counter">{chapterNumber} / {totalChapters}</span>
+				{next && (
+					<a href={chapterHref(next)} class="btn btn-sm btn-primary" aria-label={`Next chapter: ${next.data.title}`}>
+						Next ›
+					</a>
+				)}
+			</div>
+		</nav>
+
+		<!-- Breadcrumbs (desktop only) -->
+		<div class="breadcrumb-wrap container">
+			<Breadcrumbs crumbs={[
+				{ label: 'Home', href: '/' },
+				{ label: 'Comics', href: '/comics' },
+				{ label: comicTitle, href: `/comics/${comicSlug}` },
+				{ label: `Chapter ${chapterNumber}` },
+			]} />
+		</div>
+
+		<!-- Pages (vertical scroll, webtoon style) -->
+		<div class="pages" id="reader-pages" role="main" aria-label={`Pages of ${title}`}>
+			{pages.map((src, i) => (
+				<div class="page-wrap">
+					<img
+						src={src}
+						alt={`${title}, page ${i + 1} of ${pages.length}`}
+						loading={i === 0 ? 'eager' : 'lazy'}
+						decoding="async"
+						width={800}
+						height={1200}
+						class="page-img"
+					/>
+					<span class="page-num" aria-label={`Page ${i + 1}`}>{i + 1}</span>
+				</div>
+			))}
+		</div>
+
+		<!-- Bottom navigation -->
+		<div class="bottom-nav container">
+			<div class="bottom-nav-inner">
+				{prev ? (
+					<a href={chapterHref(prev)} class="btn btn-outline">
+						‹ Previous Chapter
+					</a>
+				) : (
+					<a href={`/comics/${comicSlug}`} class="btn btn-outline">← Back to Comic</a>
+				)}
+				<a href={`/comics/${comicSlug}`} class="btn btn-secondary">📚 All Chapters</a>
+				{next ? (
+					<a href={chapterHref(next)} class="btn btn-primary">
+						Next Chapter ›
+					</a>
+				) : (
+					<div class="finished-block">
+						<p>🎉 You've finished the latest chapter!</p>
+						<a href="/comics" class="btn btn-primary">Explore More Comics</a>
+					</div>
+				)}
+			</div>
+		</div>
+	</div>
+</BaseLayout>
+
+<!-- Keyboard navigation -->
+<script>
+	document.addEventListener('keydown', (e) => {
+		const prev = document.querySelector<HTMLAnchorElement>('[aria-label^="Previous chapter"]');
+		const next = document.querySelector<HTMLAnchorElement>('[aria-label^="Next chapter"]');
+		if (e.key === 'ArrowLeft'  && prev) { window.location.href = prev.href; }
+		if (e.key === 'ArrowRight' && next) { window.location.href = next.href; }
+	});
+</script>
+
+<style>
+.reader {
+	display: flex;
+	flex-direction: column;
+	background: #1a1a1a;
+	min-height: 100vh;
+}
+
+/* ── Top nav ────────────────────── */
+.reader-nav {
+	position: sticky;
+	top: 0;
+	z-index: 50;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: .65rem 1.25rem;
+	background: #111;
+	border-bottom: 2px solid #333;
+	flex-wrap: wrap;
+}
+
+.nav-left, .nav-right {
+	display: flex;
+	align-items: center;
+	gap: .5rem;
+	flex-shrink: 0;
+}
+.nav-center {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: .4rem;
+	font-size: .88rem;
+	overflow: hidden;
+	justify-content: center;
+	text-align: center;
+}
+.comic-link {
+	color: var(--primary);
+	font-weight: 700;
+	text-decoration: none;
+	white-space: nowrap;
+}
+.comic-link:hover { text-decoration: underline; }
+.sep { color: #555; }
+.chapter-label { color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chapter-counter { color: #888; font-size: .82rem; white-space: nowrap; }
+
+.back-btn { color: #ccc; border-color: #444; }
+.back-btn:hover { color: #fff; border-color: #888; }
+
+/* Override btn colours for dark reader */
+.reader-nav .btn-primary { background: var(--primary); color: #111; }
+.reader-nav .btn-outline  { background: transparent; color: #ccc; border-color: #555; }
+.reader-nav .btn-outline:hover { background: #333; color: #fff; text-decoration: none; }
+
+/* ── Breadcrumbs ───────────────── */
+.breadcrumb-wrap {
+	padding-top: .75rem;
+}
+.breadcrumb-wrap :global(.breadcrumb ol) { color: #888; }
+.breadcrumb-wrap :global(.breadcrumb a)  { color: var(--primary); }
+.breadcrumb-wrap :global([aria-current="page"]) { color: #ccc; }
+
+/* ── Page images ────────────────── */
+.pages {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0;
+	padding: 1.5rem 0;
+	width: 100%;
+}
+
+.page-wrap {
+	position: relative;
+	width: 100%;
+	max-width: 800px;
+}
+.page-img {
+	width: 100%;
+	height: auto;
+	display: block;
+	border-radius: 0;
+	box-shadow: 0 4px 24px rgba(0,0,0,.5);
+}
+.page-num {
+	position: absolute;
+	bottom: .5rem;
+	right: .75rem;
+	background: rgba(0,0,0,.6);
+	color: #aaa;
+	font-size: .75rem;
+	padding: .15rem .45rem;
+	border-radius: 4px;
+}
+
+/* ── Bottom nav ─────────────────── */
+.bottom-nav {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 2rem 1.5rem 3rem;
+	width: 100%;
+}
+.bottom-nav-inner {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+	flex-wrap: wrap;
+}
+.bottom-nav .btn-primary { background: var(--primary); color: #111; }
+.bottom-nav .btn-outline  { color: #ccc; border-color: #555; }
+.bottom-nav .btn-outline:hover { background: #333; }
+.bottom-nav .btn-secondary { background: var(--secondary); }
+
+.finished-block {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: .75rem;
+	text-align: center;
+}
+.finished-block p { color: var(--primary); font-weight: 700; margin: 0; }
+
+.container {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 1.5rem;
+	width: 100%;
+}
+
+@media (max-width: 600px) {
+	.nav-center { display: none; }
+}
+</style>

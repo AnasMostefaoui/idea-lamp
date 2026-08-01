@@ -1,62 +1,202 @@
 ---
-import Layout from '../layouts/BlogPost.astro';
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { CREATOR_NAME, CREATOR_FULL_NAME, STUDIO_NAME } from '../consts';
+
+const description = `Meet ${CREATOR_NAME} — an 8-year-old comic creator and the mastermind behind Idea Lamp Ilyes Studio. Discover his passion for storytelling and hand-drawn comics.`;
+
+const aboutJsonLd = {
+	'@context': 'https://schema.org',
+	'@type': 'AboutPage',
+	name: `About ${CREATOR_NAME} | Idea Lamp Ilyes`,
+	description,
+	mainEntity: {
+		'@type': 'Person',
+		name: CREATOR_FULL_NAME,
+		alternateName: CREATOR_NAME,
+		description: `Young comic artist and creator of ${STUDIO_NAME}`,
+		knowsAbout: ['Comics', 'Drawing', 'Storytelling', 'Illustration'],
+	},
+};
 ---
 
-<Layout
-	title="About Me"
-	description="Lorem ipsum dolor sit amet"
-	pubDate={new Date('August 08 2021')}
-	heroImage="/blog-placeholder-about.jpg"
+<BaseLayout
+	title={`About ${CREATOR_NAME}`}
+	description={description}
+	pageType="AboutPage"
+	jsonLd={aboutJsonLd}
 >
-	<p>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
-		labore et dolore magna aliqua. Vitae ultricies leo integer malesuada nunc vel risus commodo
-		viverra. Adipiscing enim eu turpis egestas pretium. Euismod elementum nisi quis eleifend quam
-		adipiscing. In hac habitasse platea dictumst vestibulum. Sagittis purus sit amet volutpat. Netus
-		et malesuada fames ac turpis egestas. Eget magna fermentum iaculis eu non diam phasellus
-		vestibulum lorem. Varius sit amet mattis vulputate enim. Habitasse platea dictumst quisque
-		sagittis. Integer quis auctor elit sed vulputate mi. Dictumst quisque sagittis purus sit amet.
-	</p>
+	<!-- Hero -->
+	<div class="about-hero">
+		<div class="avatar-wrap" aria-hidden="true">
+			<div class="avatar">🧒‍♂️</div>
+			<div class="sparkles">✨</div>
+		</div>
+		<div class="hero-text">
+			<h1 class="display-title">Meet {CREATOR_NAME}! 👋</h1>
+			<p class="lead">
+				The young mastermind behind <strong>Idea Lamp Ilyes Studio</strong>
+			</p>
+		</div>
+	</div>
 
-	<p>
-		Morbi tristique senectus et netus. Id semper risus in hendrerit gravida rutrum quisque non
-		tellus. Habitasse platea dictumst quisque sagittis purus sit amet. Tellus molestie nunc non
-		blandit massa. Cursus vitae congue mauris rhoncus. Accumsan tortor posuere ac ut. Fringilla urna
-		porttitor rhoncus dolor. Elit ullamcorper dignissim cras tincidunt lobortis. In cursus turpis
-		massa tincidunt dui ut ornare lectus. Integer feugiat scelerisque varius morbi enim nunc.
-		Bibendum neque egestas congue quisque egestas diam. Cras ornare arcu dui vivamus arcu felis
-		bibendum. Dignissim suspendisse in est ante in nibh mauris. Sed tempus urna et pharetra pharetra
-		massa massa ultricies mi.
-	</p>
+	<!-- Story -->
+	<section class="content-section">
+		<h2>🎨 My Story</h2>
+		<p>
+			Hi, I'm <strong>{CREATOR_NAME}</strong>! I'm 8 years old and I LOVE making comics. I've been drawing
+			since I was really little, and one day I decided I wanted to share my comics with the whole world.
+			That's why I made this website!
+		</p>
+		<p>
+			My dad helped me build the site, but every comic you see here is 100% mine — I draw every panel,
+			write every story, and invent every character. My mum says I have too many ideas, but I call it
+			having a bright idea lamp in my head! 💡
+		</p>
+	</section>
 
-	<p>
-		Mollis nunc sed id semper risus in. Convallis a cras semper auctor neque. Diam sit amet nisl
-		suscipit. Lacus viverra vitae congue eu consequat ac felis donec. Egestas integer eget aliquet
-		nibh praesent tristique magna sit amet. Eget magna fermentum iaculis eu non diam. In vitae
-		turpis massa sed elementum. Tristique et egestas quis ipsum suspendisse ultrices. Eget lorem
-		dolor sed viverra ipsum. Vel turpis nunc eget lorem dolor sed viverra. Posuere ac ut consequat
-		semper viverra nam. Laoreet suspendisse interdum consectetur libero id faucibus. Diam phasellus
-		vestibulum lorem sed risus ultricies tristique. Rhoncus dolor purus non enim praesent elementum
-		facilisis. Ultrices tincidunt arcu non sodales neque. Tempus egestas sed sed risus pretium quam
-		vulputate. Viverra suspendisse potenti nullam ac tortor vitae purus faucibus ornare. Fringilla
-		urna porttitor rhoncus dolor purus non. Amet dictum sit amet justo donec enim.
-	</p>
+	<!-- What I love -->
+	<section class="content-section">
+		<h2>⭐ What I Love</h2>
+		<div class="loves-grid">
+			<div class="love-card">
+				<span class="love-icon">✏️</span>
+				<h3>Drawing</h3>
+				<p>I draw every day — at school, at home, even in the car! I love pencils, markers, and gel pens.</p>
+			</div>
+			<div class="love-card">
+				<span class="love-icon">📖</span>
+				<h3>Reading Comics</h3>
+				<p>I read loads of manga and comics. My favourites inspire my own stories and characters.</p>
+			</div>
+			<div class="love-card">
+				<span class="love-icon">💭</span>
+				<h3>Storytelling</h3>
+				<p>I love making up adventures, mysteries, and funny stories. My brain is always full of ideas!</p>
+			</div>
+			<div class="love-card">
+				<span class="love-icon">🚀</span>
+				<h3>Science & Space</h3>
+				<p>Space is so cool! Many of my comics have rockets, aliens, and cool inventions.</p>
+			</div>
+		</div>
+	</section>
 
-	<p>
-		Mattis ullamcorper velit sed ullamcorper morbi tincidunt. Tortor posuere ac ut consequat semper
-		viverra. Tellus mauris a diam maecenas sed enim ut sem viverra. Venenatis urna cursus eget nunc
-		scelerisque viverra mauris in. Arcu ac tortor dignissim convallis aenean et tortor at. Curabitur
-		gravida arcu ac tortor dignissim convallis aenean et tortor. Egestas tellus rutrum tellus
-		pellentesque eu. Fusce ut placerat orci nulla pellentesque dignissim enim sit amet. Ut enim
-		blandit volutpat maecenas volutpat blandit aliquam etiam. Id donec ultrices tincidunt arcu. Id
-		cursus metus aliquam eleifend mi.
-	</p>
+	<!-- Fun facts -->
+	<section class="content-section facts-section">
+		<h2>🎲 Fun Facts About Me</h2>
+		<ul class="facts-list">
+			<li>🏅 I've been drawing comics since I was 5 years old</li>
+			<li>📚 My favourite genre is adventure + science fiction</li>
+			<li>🎨 I have over 20 sketchbooks filled with ideas</li>
+			<li>🌍 I want my comics to be translated into many languages one day</li>
+			<li>🐱 I have a cat named Pixel (yes, Space Kitty is inspired by him!)</li>
+			<li>🎮 I also love video games — they give me more story ideas</li>
+		</ul>
+	</section>
 
-	<p>
-		Tempus quam pellentesque nec nam aliquam sem. Risus at ultrices mi tempus imperdiet. Id porta
-		nibh venenatis cras sed felis eget velit. Ipsum a arcu cursus vitae. Facilisis magna etiam
-		tempor orci eu lobortis elementum. Tincidunt dui ut ornare lectus sit. Quisque non tellus orci
-		ac. Blandit libero volutpat sed cras. Nec tincidunt praesent semper feugiat nibh sed pulvinar
-		proin gravida. Egestas integer eget aliquet nibh praesent tristique magna.
-	</p>
-</Layout>
+	<!-- CTA -->
+	<div class="about-cta">
+		<h2>Want to Chat? 💌</h2>
+		<p>
+			I love hearing from fans! If you enjoyed my comics or want to encourage me, send me a message!
+		</p>
+		<div class="cta-buttons">
+			<a href="/fan-mail" class="btn btn-primary">Send Fan Mail</a>
+			<a href="/comics" class="btn btn-outline">Read My Comics</a>
+		</div>
+	</div>
+</BaseLayout>
+
+<style>
+.about-hero {
+	display: flex;
+	align-items: center;
+	gap: 2rem;
+	padding: 2.5rem 0;
+	flex-wrap: wrap;
+}
+.avatar-wrap {
+	position: relative;
+	flex-shrink: 0;
+}
+.avatar {
+	font-size: 6rem;
+	line-height: 1;
+	background: var(--primary-light);
+	border-radius: 50%;
+	width: 8rem;
+	height: 8rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 4px solid var(--primary);
+}
+.sparkles {
+	position: absolute;
+	top: -.5rem;
+	right: -.5rem;
+	font-size: 2rem;
+}
+.hero-text h1 { color: var(--secondary); margin-bottom: .5rem; }
+.hero-text .lead { font-size: 1.2rem; color: var(--text-muted); margin: 0; }
+
+.content-section {
+	margin-bottom: 3rem;
+	padding: 2rem;
+	background: var(--surface);
+	border-radius: var(--radius-lg);
+	border: 2px solid var(--border);
+}
+.content-section h2 { margin-bottom: 1rem; color: var(--secondary); }
+.content-section p  { color: var(--text-muted); max-width: 720px; }
+
+.loves-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 1.25rem;
+	margin-top: .5rem;
+}
+.love-card {
+	padding: 1.25rem;
+	background: var(--bg);
+	border-radius: var(--radius);
+	border: 2px solid var(--border);
+	text-align: center;
+}
+.love-icon { font-size: 2.5rem; display: block; margin-bottom: .5rem; }
+.love-card h3 { margin-bottom: .35rem; font-size: 1rem; }
+.love-card p  { font-size: .88rem; color: var(--text-muted); margin: 0; }
+
+.facts-section { background: var(--surface-alt); }
+.facts-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: .75rem;
+}
+.facts-list li {
+	padding: .75rem 1rem;
+	background: var(--surface);
+	border-radius: var(--radius);
+	border: 2px solid var(--border);
+	font-size: .95rem;
+	font-weight: 600;
+}
+
+.about-cta {
+	text-align: center;
+	padding: 3rem 2rem;
+	background: var(--primary-light);
+	border-radius: var(--radius-xl);
+	border: 3px solid var(--primary);
+	margin-top: 1rem;
+}
+.about-cta h2 { margin-bottom: .5rem; }
+.about-cta p  { color: var(--text-muted); margin-bottom: 1.5rem; }
+.cta-buttons  { display: flex; gap: .85rem; justify-content: center; flex-wrap: wrap; }
+</style>
+

@@ -1,0 +1,222 @@
+---
+export const prerender = false;
+
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+const env = (Astro.locals as App.Locals).runtime?.env as (Env & { ADMIN_PASSWORD?: string; DB?: D1Database }) | undefined;
+const adminPassword = env?.ADMIN_PASSWORD;
+const db = env?.DB;
+
+// ── Auth check ────────────────────────────────────────────
+async function makeToken(password: string): Promise<string> {
+	const key = await crypto.subtle.importKey(
+		'raw',
+		new TextEncoder().encode(password),
+		{ name: 'HMAC', hash: 'SHA-256' },
+		false,
+		['sign']
+	);
+	const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode('admin-session-v1'));
+	return btoa(String.fromCharCode(...new Uint8Array(sig)));
+}
+
+const cookie = Astro.request.headers.get('cookie') ?? '';
+const sessionToken = cookie.match(/admin_session=([^;]+)/)?.[1];
+let isAuthenticated = false;
+if (adminPassword && sessionToken) {
+	const expected = await makeToken(adminPassword);
+	isAuthenticated = sessionToken === expected;
+}
+
+if (!isAuthenticated) {
+	return Astro.redirect('/admin');
+}
+
+// ── Handle mark-as-read / delete actions ─────────────────
+if (Astro.request.method === 'POST' && db) {
+	const fd = await Astro.request.formData().catch(() => null);
+	const action = fd?.get('action') as string | null;
+	const id     = fd?.get('id') as string | null;
+
+	if (action === 'mark_read' && id) {
+		await db.prepare('UPDATE fan_messages SET is_read = 1 WHERE id = ?').bind(id).run();
+	} else if (action === 'delete' && id) {
+		await db.prepare('DELETE FROM fan_messages WHERE id = ?').bind(id).run();
+	}
+
+	return Astro.redirect('/admin/messages');
+}
+
+// ── Fetch messages ────────────────────────────────────────
+interface FanMessage {
+	id: number;
+	name: string;
+	message: string;
+	email: string | null;
+	created_at: string;
+	is_read: number;
+}
+
+let messages: FanMessage[] = [];
+let dbError = '';
+
+if (db) {
+	try {
+		const result = await db
+			.prepare('SELECT * FROM fan_messages ORDER BY created_at DESC LIMIT 100')
+			.all<FanMessage>();
+		messages = result.results ?? [];
+	} catch (e) {
+		dbError = 'Could not load messages. Make sure the D1 database is set up and migrations have run.';
+		console.error(e);
+	}
+} else {
+	dbError = 'D1 database binding not configured.';
+}
+
+const unreadCount = messages.filter(m => !m.is_read).length;
+
+// ── Logout ─────────────────────────────────────────────────
+const logout = Astro.url.searchParams.get('logout') === '1';
+if (logout) {
+	return new Response(null, {
+		status: 302,
+		headers: {
+			Location: '/admin',
+			'Set-Cookie': 'admin_session=; HttpOnly; SameSite=Strict; Path=/admin; Max-Age=0',
+		},
+	});
+}
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title="Admin — Fan Messages" description="Admin dashboard for fan messages" noindex={true} />
+	</head>
+	<body>
+		<Header />
+		<main class="container">
+			<div class="admin-header">
+				<div>
+					<h1>📬 Fan Messages</h1>
+					<p class="sub">
+						{messages.length} total &mdash;
+						{unreadCount > 0 ? `${unreadCount} unread` : 'all read 🎉'}
+					</p>
+				</div>
+				<a href="/admin?logout=1" class="btn btn-outline btn-sm">Logout</a>
+			</div>
+
+			{dbError && <div class="alert alert-danger">{dbError}</div>}
+
+			{messages.length === 0 && !dbError && (
+				<div class="empty-state">
+					<span aria-hidden="true">📭</span>
+					<p>No messages yet. Share your comics and fans will write in!</p>
+				</div>
+			)}
+
+			<div class="messages-list">
+				{messages.map(msg => (
+					<article class:list={['message-card', { unread: !msg.is_read }]}>
+						<div class="msg-header">
+							<div class="msg-who">
+								<span class="msg-name">{msg.name}</span>
+								{msg.email && (
+									<a href={`mailto:${msg.email}`} class="msg-email">{msg.email}</a>
+								)}
+							</div>
+							<time class="msg-time" datetime={msg.created_at}>
+								{new Date(msg.created_at).toLocaleString('en-US', {
+									year: 'numeric', month: 'short', day: 'numeric',
+									hour: '2-digit', minute: '2-digit',
+								})}
+							</time>
+						</div>
+
+						<p class="msg-body">{msg.message}</p>
+
+						<div class="msg-actions">
+							{!msg.is_read && (
+								<form method="POST" style="display:inline">
+									<input type="hidden" name="action" value="mark_read" />
+									<input type="hidden" name="id" value={String(msg.id)} />
+									<button type="submit" class="btn btn-sm btn-outline">✓ Mark Read</button>
+								</form>
+							)}
+							<form method="POST" style="display:inline" onsubmit="return confirm('Delete this message?')">
+								<input type="hidden" name="action" value="delete" />
+								<input type="hidden" name="id" value={String(msg.id)} />
+								<button type="submit" class="btn btn-sm" style="color:var(--danger);border-color:var(--danger)">🗑 Delete</button>
+							</form>
+						</div>
+					</article>
+				))}
+			</div>
+		</main>
+		<Footer />
+	</body>
+</html>
+
+<style>
+.container {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 2rem 1.5rem 4rem;
+}
+
+.admin-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-bottom: 1.75rem;
+	gap: 1rem;
+	flex-wrap: wrap;
+}
+.admin-header h1 { margin-bottom: .25rem; }
+.sub { color: var(--text-muted); margin: 0; }
+
+.empty-state {
+	text-align: center;
+	padding: 4rem 2rem;
+	color: var(--text-muted);
+}
+.empty-state span { font-size: 4rem; display: block; margin-bottom: 1rem; }
+
+.messages-list { display: flex; flex-direction: column; gap: 1rem; }
+
+.message-card {
+	background: var(--surface);
+	border: 2px solid var(--border);
+	border-radius: var(--radius-lg);
+	padding: 1.25rem 1.5rem;
+	box-shadow: var(--shadow-sm);
+}
+.message-card.unread { border-color: var(--primary); background: #FFFBEB; }
+
+.msg-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	flex-wrap: wrap;
+	gap: .5rem;
+	margin-bottom: .75rem;
+}
+.msg-who { display: flex; flex-direction: column; gap: .15rem; }
+.msg-name { font-weight: 800; font-size: 1.05rem; }
+.msg-email { font-size: .85rem; color: var(--secondary); text-decoration: none; }
+.msg-email:hover { text-decoration: underline; }
+.msg-time { font-size: .82rem; color: var(--text-muted); white-space: nowrap; }
+
+.msg-body {
+	color: var(--text);
+	margin: 0 0 1rem;
+	white-space: pre-wrap;
+	line-height: 1.65;
+}
+
+.msg-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+</style>

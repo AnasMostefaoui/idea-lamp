@@ -1,0 +1,86 @@
+---
+export const prerender = true;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ComicCard from '../../components/ComicCard.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { getCollection } from 'astro:content';
+
+const allComics = (await getCollection('comics')).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+const allChapters = await getCollection('chapters');
+
+function chapterCount(slug: string) {
+	return allChapters.filter(c => c.data.comicSlug === slug).length;
+}
+
+const description = `Browse all original comics by Ilyes — adventures, mysteries, comedy, and more! ${allComics.length} comics and counting.`;
+
+const listJsonLd = {
+	'@context': 'https://schema.org',
+	'@type': 'CollectionPage',
+	name: 'All Comics | Idea Lamp Ilyes',
+	description,
+	url: `${Astro.site}comics`,
+	hasPart: allComics.map(c => ({
+		'@type': 'ComicStory',
+		name: c.data.title,
+		description: c.data.description,
+		url: `${Astro.site}comics/${c.id}`,
+		image: c.data.coverImage,
+	})),
+};
+---
+
+<BaseLayout title="All Comics" description={description} jsonLd={listJsonLd}>
+	<Breadcrumbs crumbs={[{ label: 'Home', href: '/' }, { label: 'Comics' }]} />
+
+	<div class="page-header">
+		<h1 class="display-title">📚 All Comics</h1>
+		<p class="subtitle">
+			{allComics.length} original comic{allComics.length !== 1 ? 's' : ''} by Ilyes — all hand-drawn!
+		</p>
+	</div>
+
+	{allComics.length === 0 ? (
+		<div class="empty-state">
+			<span aria-hidden="true">📭</span>
+			<p>Comics coming soon! Check back soon.</p>
+		</div>
+	) : (
+		<div class="comics-grid">
+			{allComics.map(comic => (
+				<ComicCard
+					slug={comic.id}
+					title={comic.data.title}
+					description={comic.data.description}
+					coverImage={comic.data.coverImage}
+					genre={comic.data.genre}
+					status={comic.data.status}
+					chapterCount={chapterCount(comic.id)}
+					pubDate={comic.data.pubDate}
+				/>
+			))}
+		</div>
+	)}
+</BaseLayout>
+
+<style>
+.page-header { margin-bottom: 2rem; }
+.page-header h1 { color: var(--secondary); margin-bottom: .4rem; }
+.subtitle { color: var(--text-muted); font-size: 1.05rem; margin: 0; }
+
+.comics-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 1.5rem;
+}
+
+.empty-state {
+	text-align: center;
+	padding: 4rem 2rem;
+	color: var(--text-muted);
+}
+.empty-state span { font-size: 4rem; display: block; margin-bottom: 1rem; }
+</style>

@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Block admin section from search engines
+User-agent: *
+Disallow: /admin/
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://idea-lamp-ilyes.pages.dev/sitemap-index.xml

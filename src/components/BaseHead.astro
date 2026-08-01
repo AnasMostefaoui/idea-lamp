@@ -1,17 +1,59 @@
 ---
-// Import the global.css file here so that it is included on
-// all pages through the use of the <BaseHead /> component.
 import '../styles/global.css';
+import { SITE_TITLE, SITE_URL, STUDIO_NAME } from '../consts';
 
 interface Props {
 	title: string;
 	description: string;
 	image?: string;
+	/** page type for JSON-LD, defaults to WebPage */
+	pageType?: 'WebPage' | 'ComicStory' | 'Article' | 'ContactPage' | 'AboutPage';
+	/** structured data to inject alongside the default WebSite schema */
+	jsonLd?: Record<string, unknown>;
+	/** noindex pages (admin, etc.) */
+	noindex?: boolean;
 }
 
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? SITE_URL);
 
-const { title, description, image = '/blog-placeholder-1.jpg' } = Astro.props;
+const {
+	title,
+	description,
+	image = '/blog-placeholder-1.jpg',
+	pageType = 'WebPage',
+	jsonLd,
+	noindex = false,
+} = Astro.props;
+
+const fullTitle = title === SITE_TITLE ? title : `${title} | ${SITE_TITLE}`;
+const ogImage = new URL(image, Astro.site ?? SITE_URL);
+
+// ── JSON-LD: always include WebSite + page-level schema ──────────────────
+const websiteSchema = {
+	'@context': 'https://schema.org',
+	'@type': 'WebSite',
+	name: SITE_TITLE,
+	description,
+	url: Astro.site?.toString() ?? SITE_URL,
+	publisher: {
+		'@type': 'Person',
+		name: 'Ilyes',
+		description: 'Young comic artist and creator of Idea Lamp Ilyes Studio',
+	},
+	potentialAction: {
+		'@type': 'SearchAction',
+		target: `${Astro.site ?? SITE_URL}/comics?q={search_term_string}`,
+		'query-input': 'required name=search_term_string',
+	},
+};
+
+const breadcrumbSchema = {
+	'@context': 'https://schema.org',
+	'@type': 'BreadcrumbList',
+	itemListElement: [
+		{ '@type': 'ListItem', position: 1, name: 'Home', item: Astro.site?.toString() ?? SITE_URL },
+	],
+};
 ---
 
 <!-- Global Metadata -->
@@ -19,29 +61,53 @@ const { title, description, image = '/blog-placeholder-1.jpg' } = Astro.props;
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <meta name="generator" content={Astro.generator} />
+{noindex && <meta name="robots" content="noindex,nofollow" />}
 
-<!-- Font preloads -->
+<!-- Google Fonts (comic-style) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+	href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700;800;900&display=swap"
+	rel="stylesheet"
+/>
+
+<!-- Font preloads (local fallback) -->
 <link rel="preload" href="/fonts/atkinson-regular.woff" as="font" type="font/woff" crossorigin />
 <link rel="preload" href="/fonts/atkinson-bold.woff" as="font" type="font/woff" crossorigin />
 
 <!-- Canonical URL -->
 <link rel="canonical" href={canonicalURL} />
 
+<!-- RSS -->
+<link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href="/rss.xml" />
+
 <!-- Primary Meta Tags -->
-<title>{title}</title>
-<meta name="title" content={title} />
+<title>{fullTitle}</title>
+<meta name="title" content={fullTitle} />
 <meta name="description" content={description} />
+<meta name="author" content="Ilyes" />
+<meta name="keywords" content="comics, manga, Ilyes, Idea Lamp, kids comics, hand-drawn comics, original comics, comic stories" />
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website" />
+<meta property="og:site_name" content={SITE_TITLE} />
 <meta property="og:url" content={Astro.url} />
-<meta property="og:title" content={title} />
+<meta property="og:title" content={fullTitle} />
 <meta property="og:description" content={description} />
-<meta property="og:image" content={new URL(image, Astro.url)} />
+<meta property="og:image" content={ogImage} />
+<meta property="og:image:alt" content={description} />
+<meta property="og:locale" content="en_US" />
 
-<!-- Twitter -->
+<!-- Twitter / X -->
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:url" content={Astro.url} />
-<meta property="twitter:title" content={title} />
+<meta property="twitter:title" content={fullTitle} />
 <meta property="twitter:description" content={description} />
-<meta property="twitter:image" content={new URL(image, Astro.url)} />
+<meta property="twitter:image" content={ogImage} />
+
+<!-- JSON-LD: WebSite -->
+<script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
+
+<!-- JSON-LD: page-level (custom) -->
+{jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+
