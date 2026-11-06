@@ -1,0 +1,119 @@
+---
+const trailerUrl = 'https://www.youtube.com/watch?v=clxGzhjAoAo';
+---
+
+<section class="premiere" aria-labelledby="premiere-title">
+	<div class="premiere-topline">
+		<span class="premiere-badge"><span aria-hidden="true">✦</span> THE TRAILER IS HERE</span>
+		<span class="mission-label">ILYES’S NEXT ADVENTURE</span>
+	</div>
+	<div class="premiere-grid">
+		<div class="premiere-copy">
+			<p class="eyebrow">BIG IMAGINATION. DEEP SPACE.</p>
+			<h1 id="premiere-title">STARSHIP<span>SHIFT<span class="title-star" aria-hidden="true">✦</span></span></h1>
+			<p class="premiere-description">Something’s stirring aboard the ship.<br /> Watch the trailer for Ilyes’s space adventure, then jump into the game.</p>
+			<a class="play-game" href="/g/among-us">Play the game <span aria-hidden="true">↗</span></a>
+			<p class="play-note">Free to play · Right in your browser</p>
+		</div>
+		<div class="trailer-card">
+			<div class="video-frame" id="trailer-player">
+				<a class="trailer-preview" href={trailerUrl} aria-label="Watch the Starship Shift trailer" id="trailer-preview">
+					<img src="/images/starship-shift-trailer.jpg" alt="Crewmates face Green aboard the spaceship in Starship Shift" width="480" height="360" fetchpriority="high" />
+					<span class="video-shade" aria-hidden="true"></span>
+					<span class="play-control" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 4.5v15l12-7.5z" /></svg></span>
+					<span class="preview-label">WATCH THE TRAILER <span aria-hidden="true">↗</span></span>
+				</a>
+			</div>
+			<div class="video-caption"><span><span class="status-dot" aria-hidden="true"></span> STARSHIP SHIFT · TRAILER</span><a href={trailerUrl} target="_blank" rel="noopener noreferrer" aria-label="Watch the Starship Shift trailer on YouTube (opens in a new tab)">YouTube ↗</a></div>
+		</div>
+	</div>
+	<div class="premiere-footer"><span>A NEW ADVENTURE FROM IDEA LAMP ILYES</span><span aria-hidden="true">COMICS. GAMES. BIG IDEAS. ✦</span></div>
+</section>
+
+<script>
+	const preview = document.getElementById('trailer-preview');
+	preview?.addEventListener('click', (event) => {
+		// Preserve normal link behavior for opening the trailer in another tab.
+		if (event instanceof MouseEvent && (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)) return;
+		event.preventDefault();
+		const player = document.createElement('iframe');
+		player.src = 'https://www.youtube-nocookie.com/embed/clxGzhjAoAo?autoplay=1&playsinline=1';
+		player.title = 'Starship Shift trailer';
+		player.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+		player.allowFullscreen = true;
+		player.referrerPolicy = 'strict-origin-when-cross-origin';
+		preview.replaceWith(player);
+		player.focus();
+	}, { once: true });
+</script>
+
+<style>
+	.premiere {
+		position: relative;
+		isolation: isolate;
+		overflow: hidden;
+		padding: clamp(1.25rem, 4vw, 3rem);
+		border: 1px solid #5c518a;
+		border-radius: 28px;
+		color: #fff;
+		background:
+			radial-gradient(ellipse at 95% 10%, #6633ad66, transparent 55%),
+			radial-gradient(ellipse at 5% 100%, #225c7a55, transparent 50%), #101528;
+		box-shadow: 0 16px 40px #211a4220;
+	}
+	.premiere::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		opacity: .35;
+		background-image: radial-gradient(circle, #fff 1px, transparent 1.5px), radial-gradient(circle, #d6c4ff 1px, transparent 1.5px);
+		background-size: 83px 97px, 137px 149px;
+		background-position: 13px 29px, 51px 73px;
+	}
+	.premiere-topline, .premiere-footer, .video-caption { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+	.premiere-topline { margin-bottom: 2.75rem; }
+	.premiere-badge { display: inline-flex; align-items: center; gap: .55rem; padding: .35rem .75rem; border: 1px solid #fcd77866; border-radius: 6px; background: #fcd77812; color: #ffe29a; font-size: .7rem; font-weight: 900; letter-spacing: .12em; }
+	.mission-label, .premiere-footer { color: #b9b9d5; font-size: .65rem; letter-spacing: .12em; font-weight: 800; }
+	.premiere-grid { display: grid; grid-template-columns: .85fr 1.15fr; align-items: center; gap: clamp(1.5rem, 4vw, 3rem); }
+	.premiere-copy, .trailer-card { min-width: 0; }
+	.eyebrow { margin: 0 0 .7rem; color: #c6b2ff; font-size: .68rem; font-weight: 900; letter-spacing: .15em; }
+	h1 { font-family: 'Bangers', 'Atkinson', sans-serif; color: #fff; font-size: clamp(3.5rem, 7vw, 5.8rem); font-weight: 400; line-height: .98; letter-spacing: .045em; margin: 0 0 1.3rem; }
+	h1 > span { display: block; color: #ffe29a; }
+	.title-star { display: inline-block; margin-left: .3em; color: #c6b2ff; font-size: .45em; vertical-align: middle; }
+	.premiere-description { color: #d6d8e7; font-size: 1rem; line-height: 1.7; margin: 0 0 1.5rem; }
+	.play-game { display: inline-flex; align-items: center; justify-content: space-between; gap: 2rem; background: #ffe29a; color: #161a2e; padding: .75rem 1.25rem; border-radius: 10px; font-weight: 900; font-size: 1rem; box-shadow: 0 4px 0 #ac823e; transition: background .15s, transform .15s; }
+	.play-game:hover { background: #fff0c6; transform: translateY(-2px); text-decoration: none; }
+	.play-game span { font-size: 1.3rem; }
+	.play-note { color: #b9b9d5; font-size: .73rem; margin: .9rem 0 0; }
+	.trailer-card { padding: .5rem; background: #1b2039; border: 1px solid #8273ad88; border-radius: 15px; box-shadow: 0 12px 35px #0005; transform: rotate(-1deg); }
+	.video-frame { aspect-ratio: 16 / 9; overflow: hidden; border-radius: 9px; background: #080d1b; }
+	.trailer-preview { position: relative; display: block; width: 100%; height: 100%; color: #fff; }
+	.trailer-preview img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
+	.video-shade { position: absolute; inset: 0; background: linear-gradient(0deg, #080d1be6, transparent 60%); }
+	.play-control { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: grid; place-items: center; width: 70px; height: 70px; border-radius: 50%; background: #ffe29a; color: #151a2c; box-shadow: 0 0 0 10px #ffe29a22; transition: background .15s, box-shadow .15s; }
+	.play-control svg { width: 30px; height: 30px; }
+	.trailer-preview:hover .play-control { background: #fff0c6; box-shadow: 0 0 0 14px #ffe29a33; }
+	.preview-label { position: absolute; inset: auto 1.15rem 1rem; display: flex; justify-content: space-between; align-items: center; font-size: .8rem; font-weight: 900; letter-spacing: .08em; }
+	.video-caption { padding: .75rem .4rem .25rem; font-size: .62rem; font-weight: 800; letter-spacing: .04em; color: #d6d8e7; }
+	.video-caption > span { display: inline-flex; align-items: center; gap: .45rem; }
+	.status-dot { width: 6px; height: 6px; border-radius: 50%; background: #b6edcf; flex-shrink: 0; }
+	.video-caption a { color: #d9caff; white-space: nowrap; }
+	.video-frame :global(iframe) { display: block; width: 100%; height: 100%; border: 0; }
+	.premiere a:focus-visible { outline: 3px solid #fff; outline-offset: 5px; }
+	.trailer-preview:focus-visible { outline-offset: -4px; }
+	.premiere-footer { margin-top: 2.75rem; padding-top: 1rem; border-top: 1px solid #ffffff26; }
+	@media (max-width: 760px) {
+		.premiere-grid { grid-template-columns: 1fr; gap: 2rem; }
+		.premiere-topline { margin-bottom: 1.75rem; }
+		.mission-label { display: none; }
+		h1 { font-size: clamp(3.5rem, 13vw, 5.5rem); }
+		.premiere-description br { display: none; }
+		.trailer-card { transform: none; }
+		.premiere-footer { margin-top: 1.75rem; }
+		.premiere-footer > span:last-child { display: none; }
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.play-game, .play-control { transition: none; }
+	}
+</style>

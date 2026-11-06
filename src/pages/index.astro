@@ -3,6 +3,7 @@ export const prerender = true;
 
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ComicCard from '../components/ComicCard.astro';
+import TrailerHero from '../components/TrailerHero.astro';
 import { getCollection } from 'astro:content';
 import { SITE_TITLE, SITE_DESCRIPTION, CREATOR_NAME } from '../consts';
 
@@ -30,13 +31,14 @@ const homeJsonLd = {
 ---
 
 <BaseLayout title={SITE_TITLE} description={SITE_DESCRIPTION} jsonLd={homeJsonLd}>
+	<TrailerHero />
 	<!-- ═══════════ HERO ═══════════ -->
 	<section class="hero">
 		<div class="hero-content">
 			<p class="hero-sub">Welcome to</p>
-			<h1 class="display-title">
+			<h2 class="display-title">
 				<span class="lamp">💡</span> Idea Lamp Ilyes
-			</h1>
+			</h2>
 			<p class="hero-desc">
 				Hi! I'm <strong>{CREATOR_NAME}</strong>, and I make my own comics! 🎨<br />
 				Dive into my adventures, mysteries, and silly stories — all drawn by me!
@@ -164,7 +166,7 @@ const homeJsonLd = {
 	letter-spacing: .1em;
 	margin: 0 0 .4rem;
 }
-.hero h1 {
+.hero h2 {
 	font-size: clamp(2.4rem, 6vw, 4rem);
 	margin: 0 0 1rem;
 	color: var(--secondary);
