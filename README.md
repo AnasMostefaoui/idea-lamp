@@ -1,5 +1,15 @@
 # Astro Starter Kit: Blog
 
+## Among Us game
+
+The standalone game lives in `public/g/among-us/` and is served at
+`https://idealampilyes.com/g/among-us` (redirecting to the trailing-slash URL).
+The homepage includes a link to play it.
+
+To update the game, replace its files in that directory and retain
+`<base href="/g/among-us/">` in `index.html` so relative assets resolve correctly.
+Run `npm run check` before deploying with `npm run deploy`.
+
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/astro-blog-starter-template)
 
 ![Astro Template Preview](https://github.com/withastro/astro/assets/2244813/ff10799f-a816-4703-b967-c78997e8323d)
